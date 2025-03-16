@@ -11,7 +11,7 @@ const Navbar = () => {
         <button className="lg:hidden mr-4">
           <FaBars className="text-xl" />
         </button>
-        <div className="text-xl font-bold text-blue-600">Loan Management System</div>
+        <div className="text-xl font-bold text-blue-600">Loan Assistance System</div>
       </div>
       
       <div className="hidden md:flex items-center px-4 py-2 bg-gray-100 rounded-lg flex-1 max-w-xl mx-8">

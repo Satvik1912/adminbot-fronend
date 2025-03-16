@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   FaBars, 
   FaTimes, 
@@ -17,6 +17,7 @@ import {
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
     { path: "/dashboard", name: "Dashboard", icon: <FaHome /> },
@@ -28,8 +29,12 @@ const Sidebar = () => {
     { path: "/help", name: "Help & Support", icon: <FaQuestionCircle /> }
   ];
 
-  const isActive = (path) => {
-    return location.pathname === path;
+  const isActive = (path) => location.pathname === path;
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId"); // Remove token from storage
+    navigate("/"); // Redirect to home page
   };
 
   return (
@@ -80,13 +85,13 @@ const Sidebar = () => {
       </div>
 
       <div className={`absolute bottom-0 w-full p-4 border-t border-gray-700 ${!isOpen && "text-center"}`}>
-        <Link
-          to="/logout"
-          className="flex items-center p-3 text-gray-300 hover:bg-gray-700 rounded-md transition duration-200"
+        <button
+          onClick={handleLogout}
+          className="flex items-center p-3 text-gray-300 hover:bg-gray-700 rounded-md transition duration-200 w-full"
         >
           <FaSignOutAlt />
           {isOpen && <span className="ml-3">Logout</span>}
-        </Link>
+        </button>
       </div>
     </div>
   );
