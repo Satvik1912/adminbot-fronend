@@ -1,10 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { FaUserCircle, FaBell, FaEnvelope, FaSearch, FaBars } from "react-icons/fa";
 
 const Navbar = () => {
   const [showProfile, setShowProfile] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  
+  const navigate = useNavigate(); // Initialize navigate
+
+  // Handle Logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId"); 
+    navigate("/"); 
+  };
+
   return (
     <nav className="bg-white text-gray-800 shadow-md p-4 flex justify-between items-center z-10">
       <div className="flex items-center">
@@ -48,7 +56,12 @@ const Navbar = () => {
               <a href="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Your Profile</a>
               <a href="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
               <div className="border-t border-gray-100 my-1"></div>
-              <a href="/logout" className="block px-4 py-2 text-red-600 hover:bg-gray-100">Logout</a>
+              <button 
+                onClick={handleLogout} 
+                className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+              >
+                Logout
+              </button>
             </div>
           )}
         </div>

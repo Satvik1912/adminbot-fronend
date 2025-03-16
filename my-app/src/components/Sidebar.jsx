@@ -33,8 +33,8 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("userId"); // Remove token from storage
-    navigate("/"); // Redirect to home page
+    localStorage.removeItem("userId"); 
+    navigate("/");
   };
 
   return (
