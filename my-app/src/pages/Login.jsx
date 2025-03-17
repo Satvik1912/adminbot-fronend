@@ -23,7 +23,8 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("token", data.access_token); // Store JWT token
+        localStorage.setItem("token", data.access_token); 
+        // localStorage.userId("token", data.userId); 
         navigate("/dashboard");
       } else {
         // Handle different error formats
