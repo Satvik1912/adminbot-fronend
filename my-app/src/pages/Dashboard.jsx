@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import Chatbot from "../components/Chatbot.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 import Navbar from "../components/Navbar.jsx";
+import { useNavigate } from "react-router-dom"; // Make sure react-router is installed
 
 const Dashboard = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const navigate = useNavigate();
   
   // Close sidebar when window resizes to desktop
   useEffect(() => {
@@ -17,6 +19,29 @@ const Dashboard = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Prevent back button navigation
+  useEffect(() => {
+    // Push a new entry to history stack
+    window.history.pushState(null, "", window.location.pathname);
+
+    // Listen for popstate events (when back button is pressed)
+    const preventNavigation = (e) => {
+      // Push another state to prevent going back
+      window.history.pushState(null, "", window.location.pathname);
+      
+      // Optional: Show a message that back navigation is disabled
+      // You could replace this with a modal or custom notification
+      const confirmMessage = "Navigation is disabled for security reasons.";
+      alert(confirmMessage);
+    };
+
+    window.addEventListener("popstate", preventNavigation);
+    
+    return () => {
+      window.removeEventListener("popstate", preventNavigation);
+    };
+  }, [navigate]);
 
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
