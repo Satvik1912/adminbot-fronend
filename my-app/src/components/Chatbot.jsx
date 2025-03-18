@@ -12,8 +12,7 @@ const Chatbot = () => {
   const [messages, setMessages] = useState([{
     text: "Hello! How can I assist you with loans query today?",
     sender: "bot",
-    isInitial: true,
-    timestamp: new Date().toISOString()
+    isInitial: true
   }]);
   const [input, setInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -180,7 +179,7 @@ const Chatbot = () => {
               text: "Hello! How can I assist you with loans query today?",
               sender: "bot",
               isInitial: true,
-              timestamp: new Date().toISOString()
+              
             },
             ...formattedMessages
           ]);
@@ -317,7 +316,7 @@ const Chatbot = () => {
       text: "Hello! How can I assist you with loan management today?",
       sender: "bot",
       isInitial: true,
-      timestamp: new Date().toISOString()
+      
     };
     
     // Update messages state for the UI
