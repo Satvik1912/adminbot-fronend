@@ -722,7 +722,7 @@ const Chatbot = () => {
                 >
                   <FaBars />
                 </button>
-                <div className="chat-title">Loan Assistant</div>
+                <div className="chat-title">Loanie</div>
               </div>
               <button 
                 onClick={() => setIsOpen(false)} 
