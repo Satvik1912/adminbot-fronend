@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import Chatbot from "../components/Chatbot.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 import Navbar from "../components/Navbar.jsx";
-import { useNavigate } from "react-router-dom"; // Make sure react-router is installed
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Dashboard = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Close sidebar when window resizes to desktop
   useEffect(() => {
@@ -20,28 +21,54 @@ const Dashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Prevent back button navigation
+  // Prevent back navigation (including swipe gestures)
   useEffect(() => {
-    // Push a new entry to history stack
-    window.history.pushState(null, "", window.location.pathname);
-
-    // Listen for popstate events (when back button is pressed)
+    // Store the current path
+    const currentPath = location.pathname;
+    
+    // Initial history entry
+    window.history.pushState({ fromDashboard: true }, "", currentPath);
+    
     const preventNavigation = (e) => {
-      // Push another state to prevent going back
-      window.history.pushState(null, "", window.location.pathname);
+      // Push state again to prevent going back
+      window.history.pushState({ fromDashboard: true }, "", currentPath);
       
-      // Optional: Show a message that back navigation is disabled
-      // You could replace this with a modal or custom notification
+      // Optional message
       const confirmMessage = "Navigation is disabled for security reasons.";
       alert(confirmMessage);
     };
-
+    
+    // Handle popstate (triggered by back button or swipe)
     window.addEventListener("popstate", preventNavigation);
+    
+    // For iOS Safari and some Android browsers, we need additional handling
+    // This detects and prevents touchstart-based swipe navigation
+    let touchStartX = 0;
+    const handleTouchStart = (e) => {
+      touchStartX = e.touches[0].clientX;
+    };
+    
+    const handleTouchEnd = (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const diff = touchEndX - touchStartX;
+      
+      // If swiped right with enough distance (common back gesture)
+      if (diff > 100) {
+        e.preventDefault();
+        preventNavigation();
+        return false;
+      }
+    };
+    
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd, { passive: false });
     
     return () => {
       window.removeEventListener("popstate", preventNavigation);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [navigate]);
+  }, [location, navigate]);
 
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);

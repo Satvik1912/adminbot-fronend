@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link ,useNavigate} from "react-router-dom";
 
 const HomePage = () => {
   // Slide data with improved structure
@@ -29,7 +29,23 @@ const HomePage = () => {
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
+    // Prevent Back Button Navigation
+    useEffect(() => {
+      const handleBackButton = (event) => {
+        event.preventDefault();
+        window.history.pushState(null, "", window.location.href);
+      };
+  
+      window.history.pushState(null, "", window.location.href);
+      window.addEventListener("popstate", handleBackButton);
+  
+      return () => {
+        window.removeEventListener("popstate", handleBackButton);
+      };
+    }, [navigate]);
+  
   // Auto-advance slides with improved timing
   useEffect(() => {
     const interval = setInterval(() => {
@@ -188,7 +204,7 @@ const HomePage = () => {
               {/* Improved slide navigation */}
               <div className="absolute bottom-6 left-0 right-0 flex justify-center space-x-3">
                 {slides.map((_, index) => (
-                  <button 
+                  <button   
                     key={index}
                     onClick={() => setCurrentSlide(index)}
                     className={`w-3 h-3 rounded-full transition duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
