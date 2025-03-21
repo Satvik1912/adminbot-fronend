@@ -3,6 +3,7 @@ import { FaRobot, FaPaperPlane, FaTimes, FaSearch, FaPlus, FaChartBar, FaFileExc
 import { generateChatTitle, formatTimestamp } from "./chatbot-utils.js";
 import "./Chatbot.css";
 import axios from "axios"; 
+import ReactMarkdown from 'react-markdown';
 
 const Chatbot = () => {
   // Main states
@@ -74,7 +75,7 @@ const Chatbot = () => {
     
     setIsLoadingThreads(true);
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/threads?page=${page}&limit=${THREAD_LIMIT}`, {
+      const response = await axios.get(`http://127.0.0.1:8000/threads?page=${page}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -138,7 +139,7 @@ const Chatbot = () => {
     
     setIsLoadingConversations(true);
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/threads?thread_id=${threadId}&page=${page}&limit=${CONVERSATION_LIMIT}`, {
+      const response = await axios.get(`http://127.0.0.1:8000/threads?thread_id=${threadId}&page=${page}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -151,23 +152,35 @@ const Chatbot = () => {
         setTotalConversationPages(total_pages);
         setConversationPage(page);
         
+        // Add sorting to ensure oldest messages appear first
+        const sortedConversations = [...conversations].sort((a, b) => {
+          return new Date(a.timestamp) - new Date(b.timestamp);
+        });
+        
         // Transform conversations into the format expected by messages
-        const formattedMessages = conversations.map(conv => [
-          // User message
-          {
-            text: conv.query,
-            sender: "user",
-            timestamp: conv.timestamp
-          },
-          // Bot response
-          {
-            text: conv.response,
-            sender: "bot",
-            timestamp: conv.timestamp,
-            conversationId: conv.conversation_id,
-            excelPath: conv.excel_path
-          }
-        ]).flat();
+        // In the fetchThreadConversations function, where you format the messages:
+const parseMarkdown = (text) => {
+  if (!text) return '';
+  return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+};
+
+const formattedMessages = sortedConversations.map(conv => [
+  // User message
+  {
+    text: conv.query,
+    sender: "user",
+    timestamp: conv.timestamp
+  },
+  // Bot response
+  {
+    text: parseMarkdown(conv.response),
+    sender: "bot",
+    timestamp: conv.timestamp,
+    conversationId: conv.conversation_id,
+    excelPath: conv.excel_path,
+    parsedHtml: true
+  }
+]).flat();
         
         // Don't reverse the order - FIX FOR ISSUE #1
         // Keep the chronological order (user message followed by bot response)
@@ -439,34 +452,42 @@ const Chatbot = () => {
           }
         });
       
-        // Extract data from API response
-        const { 
-          results, 
-          message,
-          thread_id, 
-          chart_type, 
-          chart_image_url, 
-          conversation_id 
-        } = response.data;
-      
-        // Update thread ID if this is a new thread
-        if (thread_id && thread_id !== currentThreadId) {
-          setCurrentThreadId(thread_id);
-        }
-      
-        // Create bot response with the results from API
-        const botResponse = {
-          text: message || results, // Use the results field directly
-          sender: "bot",
-          timestamp: new Date().toISOString(),
-          chartType: chart_type,
-          chartImageUrl: chart_image_url,
-          conversationId: conversation_id,
-          excelPath: response.data.excel_path
-        };
-        
-        // Update messages for UI
-        setMessages(prev => [...prev, botResponse]);
+// Extract data from API response
+const { 
+  results, 
+  message,
+  thread_id, 
+  chart_type, 
+  chart_image_url, 
+  conversation_id 
+} = response.data;
+
+// Update thread ID if this is a new thread
+if (thread_id && thread_id !== currentThreadId) {
+  setCurrentThreadId(thread_id);
+}
+
+// Function to parse markdown (specifically bold text)
+const parseMarkdown = (text) => {
+  if (!text) return '';
+  return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+};
+
+// Create bot response with the results from API
+const botResponse = {
+  rawText: message || results, // Store original text
+  text: parseMarkdown(message || results), // Parse markdown in the text
+  sender: "bot",
+  timestamp: new Date().toISOString(),
+  chartType: chart_type,
+  chartImageUrl: chart_image_url,
+  conversationId: conversation_id,
+  excelPath: response.data.excel_path,
+  parsedHtml: true // Flag to indicate this contains HTML
+};
+
+// Update messages for UI
+setMessages(prev => [...prev, botResponse]);
         
         // Update chat history with bot response and thread_id
         setChatHistory(prev => {
@@ -747,11 +768,15 @@ const Chatbot = () => {
               )}
               
               {messages.map((msg, index) => (
-                <div key={index} className={`message-wrapper ${msg.sender === "user" ? "user-message-wrapper" : "bot-message-wrapper"}`}>
-                  <div className={`message ${msg.sender === "user" ? "user-message" : "bot-message"} ${msg.isError ? "error-message" : ""}`}>
-                    {msg.text}
-                    
-                    {/* Action buttons for bot messages (excluding initial message) */}
+  <div key={index} className={`message-wrapper ${msg.sender === "user" ? "user-message-wrapper" : "bot-message-wrapper"}`}>
+    <div className={`message ${msg.sender === "user" ? "user-message" : "bot-message"} ${msg.isError ? "error-message" : ""}`}>
+      {msg.parsedHtml ? (
+        <div dangerouslySetInnerHTML={{ __html: msg.text }} />
+      ) : (
+        <>{msg.text}</>
+      )}
+      
+      {/* Action buttons for bot messages (excluding initial message) */}
                     {msg.sender === "bot" && !msg.isInitial && !msg.isError && msg.conversationId && (
                       <div className="message-actions">
                         {msg.chartType && msg.chartImageUrl && (
