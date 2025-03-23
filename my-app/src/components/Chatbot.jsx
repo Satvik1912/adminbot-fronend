@@ -153,38 +153,42 @@ const Chatbot = () => {
       if (response.data && response.data.threads) {
         // Extract thread data
         const { threads, total_pages, total_threads } = response.data.threads;
-        
-        // Update state
-        setTotalThreadPages(total_pages);
-        setThreadPage(page);
-        
+
+        // ✅ Sort threads by start_timestamp (latest first)
+        const sortedThreads = threads.sort((a, b) => 
+          new Date(b.start_timestamp) - new Date(a.start_timestamp)
+        );
+
         // Transform threads into the format expected by chatHistory
         const threadsObj = {};
-        threads.forEach(thread => {
+        sortedThreads.forEach(thread => {
           threadsObj[thread.thread_id] = {
             title: thread.chat_name,
             messages: [],
-            createdAt: new Date().toISOString(), // Default since we don't have the actual timestamp
+            createdAt: thread.start_timestamp, 
             threadId: thread.thread_id
           };
         });
-        
-        // Update chat history
+
+        // Update state
+        setTotalThreadPages(total_pages);
+        setThreadPage(page);
+
+        // ✅ Ensure the latest threads are at the top
         if (resetHistory) {
           setChatHistory(threadsObj);
         } else {
           setChatHistory(prev => ({
-            ...prev,
-            ...threadsObj
+            ...threadsObj,  // New threads first
+            ...prev         // Older threads below
           }));
         }
-        
+
         // Mark as loaded
         setChatHistoryLoaded(true);
       }
     } catch (error) {
       console.error("Error fetching thread history:", error);
-      // Handle authentication errors
       if (error.response && error.response.status === 401) {
         localStorage.removeItem('token');
         setAuthToken(null);
@@ -193,7 +197,8 @@ const Chatbot = () => {
     } finally {
       setIsLoadingThreads(false);
     }
-  };
+};
+
 
   // Fetch more threads when scrolling
   const fetchMoreThreads = () => {
