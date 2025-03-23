@@ -520,3 +520,147 @@
     height: -webkit-fill-available;
   }
 }
+
+
+/* Type dropdown styling */
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.type-dropdown {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background-color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.type-dropdown div {
+  transition: background-color 0.2s;
+}
+
+.type-dropdown div:hover {
+  background-color: #ebf5ff;
+}
+
+/* Answer type indicator */
+.answer-type-indicator {
+  position: absolute;
+  bottom: -18px;
+  left: 10px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* Input field with active type */
+.input-with-type {
+  padding-right: 100px;
+}
+/* Chat input area */
+.chat-input-area {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  width: 100%;
+}
+
+.input-wrapper {
+  flex: 1;
+  margin-right: 10px;
+  position: relative;
+}
+
+.chat-input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.send-button {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.send-button:hover {
+  background-color: #2563eb;
+}
+
+.send-button.disabled {
+  background-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.send-button.loading {
+  background-color: #e2e8f0;
+  cursor: wait;
+}
+.type-dropdown {
+  background-color: #0f3460; /* Dark blue background by default */
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  width: 180px;
+  border: 1px solid #16498a;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: 'Baskerville', 'Garamond', 'Georgia', serif; /* Elegant, Italian-inspired serif font */
+}
+
+.type-dropdown .p-2 {
+  padding: 8px 12px;
+}
+
+.type-dropdown .text-xs.text-gray-500 {
+  color: #a3c2e6; /* Light blue text for header */
+  font-weight: 500;
+  font-size: 12px;
+  background-color: #072a56; /* Slightly darker header */
+  border-bottom: 1px solid #16498a;
+  letter-spacing: 0.4px;
+  font-style: italic; /* Adding a slight italic style for the header */
+}
+
+.type-dropdown .hover\:bg-blue-50:hover {
+  background-color: #2563eb; /* Vibrant blue on hover (same as before) */
+  color: #ffffff;
+}
+
+.type-dropdown .cursor-pointer {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  color: #e2e8f0; /* Light text for readability */
+  padding: 10px 12px;
+  background-color: #1a4b8c; /* Medium blue background for options */
+}
+
+.type-dropdown .cursor-pointer::before {
+  
+  margin-right: 8px;
+  font-weight: 600;
+  color: #79b9ff; /* Bright blue for @ symbol */
+}

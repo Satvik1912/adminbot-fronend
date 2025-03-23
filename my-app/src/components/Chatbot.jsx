@@ -31,6 +31,11 @@ const Chatbot = () => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [chatHistoryLoaded, setChatHistoryLoaded] = useState(false);
   
+  // New states for the dropdown functionality
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const [answerType, setAnswerType] = useState("excel"); // Default to excel
+  const [cursorPosition, setCursorPosition] = useState(0);
+  
   const THREAD_LIMIT = 10;
   const CONVERSATION_LIMIT = 10;
   
@@ -55,6 +60,7 @@ const Chatbot = () => {
   const inputRef = useRef(null);
   const sidebarRef = useRef(null);
   const chatMessagesRef = useRef(null);
+  const typeDropdownRef = useRef(null);
 
   // Check authentication status on load
   useEffect(() => {
@@ -67,6 +73,69 @@ const Chatbot = () => {
     } else {
       setIsAuthenticated(false);
     }
+  }, []);
+
+  // Handle input changes including @ trigger
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setInput(value);
+    
+    // Get cursor position
+    const position = e.target.selectionStart;
+    setCursorPosition(position);
+    
+    // Check if @ was just typed
+    if (value[position-1] === '@') {
+      setShowTypeDropdown(true);
+    } else if (showTypeDropdown) {
+      // Close dropdown if input doesn't contain @ near cursor
+      const nearText = value.substring(Math.max(0, position - 2), position);
+      if (!nearText.includes('@')) {
+        setShowTypeDropdown(false);
+      }
+    }
+  };
+  
+  // Handle dropdown option selection
+  const handleTypeSelect = (type) => {
+    // Remove the @ character and replace with selected type
+    const beforeCursor = input.substring(0, cursorPosition - 1);
+    const afterCursor = input.substring(cursorPosition);
+    
+    // Format the display text for the input
+    const displayType = type.charAt(0).toUpperCase() + type.slice(1);
+    setInput(`${beforeCursor}@${displayType} ${afterCursor}`);
+    
+    // Store the actual value for API
+    setAnswerType(type);
+    
+    // Close the dropdown
+    setShowTypeDropdown(false);
+    
+    // Focus back on input
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        // Set cursor position after the inserted text
+        const newPosition = beforeCursor.length + displayType.length + 2; // +2 for @ and space
+        inputRef.current.setSelectionRange(newPosition, newPosition);
+      }
+    }, 0);
+  };
+  
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target) && 
+          event.target !== inputRef.current) {
+        setShowTypeDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   // Fetch thread history
@@ -158,32 +227,28 @@ const Chatbot = () => {
         });
         
         // Transform conversations into the format expected by messages
-        // In the fetchThreadConversations function, where you format the messages:
-const parseMarkdown = (text) => {
-  if (!text) return '';
-  return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-};
-
-const formattedMessages = sortedConversations.map(conv => [
-  // User message
-  {
-    text: conv.query,
-    sender: "user",
-    timestamp: conv.timestamp
-  },
-  // Bot response
-  {
-    text: parseMarkdown(conv.response),
-    sender: "bot",
-    timestamp: conv.timestamp,
-    conversationId: conv.conversation_id,
-    excelPath: conv.excel_path,
-    parsedHtml: true
-  }
-]).flat();
+        const parseMarkdown = (text) => {
+          if (!text) return '';
+          return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        };
         
-        // Don't reverse the order - FIX FOR ISSUE #1
-        // Keep the chronological order (user message followed by bot response)
+        const formattedMessages = sortedConversations.map(conv => [
+          // User message
+          {
+            text: conv.query,
+            sender: "user",
+            timestamp: conv.timestamp
+          },
+          // Bot response
+          {
+            text: parseMarkdown(conv.response),
+            sender: "bot",
+            timestamp: conv.timestamp,
+            conversationId: conv.conversation_id,
+            excelPath: conv.excel_path,
+            parsedHtml: true
+          }
+        ]).flat();
         
         // Update messages
         if (resetMessages) {
@@ -238,7 +303,7 @@ const formattedMessages = sortedConversations.map(conv => [
     }
   };
 
-  // Handle scroll events for pagination - FIX FOR ISSUE #2
+  // Handle scroll events for pagination
   useEffect(() => {
     const handleSidebarScroll = () => {
       if (!sidebarRef.current) return;
@@ -350,6 +415,9 @@ const formattedMessages = sortedConversations.map(conv => [
     setCurrentChatId(newChatId);
     setCurrentThreadId(null);
     
+    // Reset answer type to excel (default)
+    setAnswerType("excel");
+    
     // Reset conversation page
     setConversationPage(1);
     setTotalConversationPages(1);
@@ -378,6 +446,9 @@ const formattedMessages = sortedConversations.map(conv => [
         setCurrentThreadId(null);
       }
       
+      // Reset answer type to excel (default)
+      setAnswerType("excel");
+      
       // Close sidebar on mobile
       if (window.innerWidth <= 768) {
         setIsSidebarOpen(false);
@@ -404,6 +475,12 @@ const formattedMessages = sortedConversations.map(conv => [
     }
 
     if (input.trim() && !isWaitingForResponse) {
+      // Determine if user is using the @Insights syntax
+      const isInsightsMode = input.includes('@Insights') || input.includes('@insights');
+      
+      // Set answer type accordingly
+      const currentAnswerType = isInsightsMode ? 'insights' : 'excel';
+      
       const userMessage = {
         text: input.trim(),
         sender: "user",
@@ -435,9 +512,9 @@ const formattedMessages = sortedConversations.map(conv => [
 
       try {
         // Call the API with the user input
-        // Call the API with the user input
         const requestBody = {
-          user_input: userMessage.text
+          user_input: userMessage.text,
+          answer_type: currentAnswerType // Use the detected answer type or default to excel
         };
         
         // Add thread_id if it exists
@@ -452,42 +529,42 @@ const formattedMessages = sortedConversations.map(conv => [
           }
         });
       
-// Extract data from API response
-const { 
-  results, 
-  message,
-  thread_id, 
-  chart_type, 
-  chart_image_url, 
-  conversation_id 
-} = response.data;
+        // Extract data from API response
+        const { 
+          results, 
+          message,
+          thread_id, 
+          chart_type, 
+          chart_image_url, 
+          conversation_id 
+        } = response.data;
 
-// Update thread ID if this is a new thread
-if (thread_id && thread_id !== currentThreadId) {
-  setCurrentThreadId(thread_id);
-}
+        // Update thread ID if this is a new thread
+        if (thread_id && thread_id !== currentThreadId) {
+          setCurrentThreadId(thread_id);
+        }
 
-// Function to parse markdown (specifically bold text)
-const parseMarkdown = (text) => {
-  if (!text) return '';
-  return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-};
+        // Function to parse markdown (specifically bold text)
+        const parseMarkdown = (text) => {
+          if (!text) return '';
+          return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        };
 
-// Create bot response with the results from API
-const botResponse = {
-  rawText: message || results, // Store original text
-  text: parseMarkdown(message || results), // Parse markdown in the text
-  sender: "bot",
-  timestamp: new Date().toISOString(),
-  chartType: chart_type,
-  chartImageUrl: chart_image_url,
-  conversationId: conversation_id,
-  excelPath: response.data.excel_path,
-  parsedHtml: true // Flag to indicate this contains HTML
-};
+        // Create bot response with the results from API
+        const botResponse = {
+          rawText: message || results, // Store original text
+          text: parseMarkdown(message || results), // Parse markdown in the text
+          sender: "bot",
+          timestamp: new Date().toISOString(),
+          chartType: chart_type,
+          chartImageUrl: chart_image_url,
+          conversationId: conversation_id,
+          excelPath: response.data.excel_path,
+          parsedHtml: true // Flag to indicate this contains HTML
+        };
 
-// Update messages for UI
-setMessages(prev => [...prev, botResponse]);
+        // Update messages for UI
+        setMessages(prev => [...prev, botResponse]);
         
         // Update chat history with bot response and thread_id
         setChatHistory(prev => {
@@ -768,15 +845,15 @@ setMessages(prev => [...prev, botResponse]);
               )}
               
               {messages.map((msg, index) => (
-  <div key={index} className={`message-wrapper ${msg.sender === "user" ? "user-message-wrapper" : "bot-message-wrapper"}`}>
-    <div className={`message ${msg.sender === "user" ? "user-message" : "bot-message"} ${msg.isError ? "error-message" : ""}`}>
-      {msg.parsedHtml ? (
-        <div dangerouslySetInnerHTML={{ __html: msg.text }} />
-      ) : (
-        <>{msg.text}</>
-      )}
-      
-      {/* Action buttons for bot messages (excluding initial message) */}
+                <div key={index} className={`message-wrapper ${msg.sender === "user" ? "user-message-wrapper" : "bot-message-wrapper"}`}>
+                  <div className={`message ${msg.sender === "user" ? "user-message" : "bot-message"} ${msg.isError ? "error-message" : ""}`}>
+                    {msg.parsedHtml ? (
+                      <div dangerouslySetInnerHTML={{ __html: msg.text }} />
+                    ) : (
+                      <>{msg.text}</>
+                    )}
+                    
+                    {/* Action buttons for bot messages (excluding initial message) */}
                     {msg.sender === "bot" && !msg.isInitial && !msg.isError && msg.conversationId && (
                       <div className="message-actions">
                         {msg.chartType && msg.chartImageUrl && (
@@ -808,7 +885,7 @@ setMessages(prev => [...prev, botResponse]);
               {isWaitingForResponse && (
                 <div className="message-wrapper bot-message-wrapper">
                   <div className="message bot-message">
-                    <div className="typing-indicator">
+                  <div className="typing-indicator">
                       <span></span>
                       <span></span>
                       <span></span>
@@ -823,18 +900,37 @@ setMessages(prev => [...prev, botResponse]);
               <div ref={messagesEndRef} />
             </div>
             
-            {/* Input area */}
+            {/* Input area with dropdown */}
             <div className="chat-input-area">
-              <input 
-                type="text" 
-                ref={inputRef}
-                className="chat-input" 
-                value={input} 
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={isAuthenticated ? "Type a message..." : "Please log in to chat"}
-                disabled={isWaitingForResponse || !isAuthenticated}
-              />
+              <div className="input-wrapper w-full flex-grow relative">
+                <input 
+                  type="text" 
+                  ref={inputRef}
+                  className="chat-input w-full" 
+                  value={input} 
+                  onChange={handleInputChange}
+                  onKeyPress={handleKeyPress}
+                  placeholder={isAuthenticated ? "Type @ for insights or just type for excel..." : "Please log in to chat"}
+                  disabled={isWaitingForResponse || !isAuthenticated}
+                />
+                
+                {/* Type dropdown - showing only insights option */}
+                {showTypeDropdown && (
+                  <div 
+                    ref={typeDropdownRef}
+                    className="type-dropdown absolute left-0 bottom-full mb-2 bg-white rounded-md shadow-lg z-10 w-48"
+                  >
+                    <div className="p-2 text-xs text-gray-500 border-b">Loanie insights:</div>
+                    <div 
+                      className="p-2 hover:bg-blue-50 cursor-pointer"
+                      onClick={() => handleTypeSelect('insights')}
+                    >
+                      @Insights
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <button 
                 onClick={isWaitingForResponse || !isAuthenticated ? null : handleSend} 
                 className={`send-button ${isWaitingForResponse ? 'loading' : (!isAuthenticated || !input.trim() ? 'disabled' : '')}`}
