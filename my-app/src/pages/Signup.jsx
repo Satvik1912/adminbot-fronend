@@ -23,15 +23,19 @@ const Signup = () => {
   });
 
   // Timer countdown effect
-  useEffect(() => {
-    let interval;
-    if (timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [timer]);
+ // Timer countdown effect
+useEffect(() => {
+  let interval;
+  if (timer > 0) {
+    interval = setInterval(() => {
+      setTimer((prevTimer) => prevTimer - 1);
+    }, 1000);
+  } else if (timer === 0 && otpSent) {
+    // Reset OTP attempts when timer reaches 0
+    setOtpAttempts(0);
+  }
+  return () => clearInterval(interval);
+}, [timer, otpSent]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -110,7 +114,7 @@ const Signup = () => {
       if (response.ok) {
         setOtpSent(true);
         setOtpEmail(data.email || formData.email);
-        setTimer(120); // 2 minutes countdown
+        setTimer(60); // 2 minutes countdown
       } else {
         setErrors(prev => ({
           ...prev,
@@ -270,7 +274,7 @@ const Signup = () => {
       value={formData.otp}
       onChange={handleChange}
       className={`w-full px-3 py-2 border ${errors.otp ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-10`}
-      placeholder="6-digit code"
+      placeholder="Enter code"
       required
     />
     {errors.otp && (
