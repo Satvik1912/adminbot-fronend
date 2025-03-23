@@ -261,35 +261,35 @@ const Signup = () => {
             )}
           </div>
           
-          <div className="flex items-start space-x-3">
-            <div className="flex-grow">
-              <label className="block text-gray-700 text-sm font-semibold mb-1">Verification Code</label>
-              <input
-                type="text"
-                name="otp"
-                value={formData.otp}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border ${errors.otp ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                placeholder="6-digit code"
-                required
-              />
-              {errors.otp && (
-                <div className="border-l-2 border-red-500 pl-2 mt-1">
-                  <p className="text-red-600 text-xs">{errors.otp}</p>
-                </div>
-              )}
-            </div>
-            <div>
-              <button 
-                type="button" 
-                onClick={requestOtp}
-                disabled={loading || timer > 0}
-                className={`whitespace-nowrap h-[38px] mt-7 ${timer > 0 ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white font-medium px-3 py-2 rounded-lg transition duration-300 shadow-md text-sm`}
-              >
-                {loading ? "Sending..." : timer > 0 ? `${formatTime(timer)}` : otpSent ? "Resend" : "Get Code"}
-              </button>
-            </div>
-          </div>
+          <div className="flex items-center space-x-3">
+  <div className="flex-grow">
+    <label className="block text-gray-700 text-sm font-semibold mb-1">Verification Code</label>
+    <input
+      type="text"
+      name="otp"
+      value={formData.otp}
+      onChange={handleChange}
+      className={`w-full px-3 py-2 border ${errors.otp ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-10`}
+      placeholder="6-digit code"
+      required
+    />
+    {errors.otp && (
+      <div className="border-l-2 border-red-500 pl-2 mt-1">
+        <p className="text-red-600 text-xs">{errors.otp}</p>
+      </div>
+    )}
+  </div>
+  <div className="self-end mb-[1px]">
+    <button 
+      type="button" 
+      onClick={requestOtp}
+      disabled={loading || timer > 0}
+      className={`whitespace-nowrap h-10 ${timer > 0 ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white font-medium px-3 rounded-lg transition duration-300 shadow-md text-sm min-w-[90px]`}
+    >
+      {loading ? "Sending..." : timer > 0 ? `${formatTime(timer)}` : otpSent ? "Resend" : "Get Code"}
+    </button>
+  </div>
+</div>
           
           <button 
             type="submit" 
