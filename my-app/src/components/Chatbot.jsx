@@ -57,6 +57,7 @@ const Chatbot = () => {
     const sidebarRef = useRef(null);
     const chatMessagesRef = useRef(null);
     const typeDropdownRef = useRef(null);
+    const chatWindowRef = useRef(null); // Add chat window ref
     const [threadScrollPosition, setThreadScrollPosition] = useState(0); // Store thread scroll position
 
     // Debounce Function
@@ -702,6 +703,23 @@ const Chatbot = () => {
         createNewChat();
     };
 
+    // Effect to close chatbot on outside click
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (chatWindowRef.current && !chatWindowRef.current.contains(event.target) &&
+                event.target.closest('.fixed.bottom-5.right-5:not(.chat-window)') == null &&
+                 event.target.closest('.fixed.bottom-5.right-5.bg-blue-600') == null) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [chatWindowRef]);
+
+
     return (
         <>
             {/* Chat button */}
@@ -714,7 +732,7 @@ const Chatbot = () => {
             </button>
 
             {/* Chat window */}
-            <div className={`fixed bottom-5 right-5 chat-window transition-all duration-300 transform ${isOpen ? 'scale-100 z-50' : 'scale-0 z-0'}`}>
+            <div className={`fixed bottom-5 right-5 chat-window transition-all duration-300 transform ${isOpen ? 'scale-100 z-50' : 'scale-0 z-0'}`} ref={chatWindowRef}>
                 <div className="chat-container">
                     {/* Sidebar */}
                     <aside className={`chat-sidebar ${isSidebarOpen ? 'active' : ''}`} ref={sidebarRef}>
