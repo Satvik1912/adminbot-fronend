@@ -1,15 +1,22 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Chatbot from "../components/Chatbot.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 import Navbar from "../components/Navbar.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
 
-
 const Dashboard = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
+  // Image states and handlers
+  const [sidebarBackgroundImage, setSidebarBackgroundImage] = useState(null);
+  const [interactiveAreaBackgroundImage, setInteractiveAreaBackgroundImage] = useState(null);
+
+  // Preview URLs
+  const [sidebarPreview, setSidebarPreview] = useState(null);
+  const [interactiveAreaPreview, setInteractiveAreaPreview] = useState(null);
+
   // Close sidebar when window resizes to desktop
   useEffect(() => {
     const handleResize = () => {
@@ -17,42 +24,42 @@ const Dashboard = () => {
         setIsMobileSidebarOpen(false);
       }
     };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Prevent back navigation (including swipe gestures)
   useEffect(() => {
     // Store the current path
     const currentPath = location.pathname;
-    
+
     // Initial history entry
     window.history.pushState({ fromDashboard: true }, "", currentPath);
-    
+
     const preventNavigation = (e) => {
       // Push state again to prevent going back
       window.history.pushState({ fromDashboard: true }, "", currentPath);
-      
+
       // Optional message
       const confirmMessage = "Navigation is disabled for security reasons.";
       alert(confirmMessage);
     };
-    
+
     // Handle popstate (triggered by back button or swipe)
     window.addEventListener("popstate", preventNavigation);
-    
+
     // For iOS Safari and some Android browsers, we need additional handling
     // This detects and prevents touchstart-based swipe navigation
     let touchStartX = 0;
     const handleTouchStart = (e) => {
       touchStartX = e.touches[0].clientX;
     };
-    
+
     const handleTouchEnd = (e) => {
       const touchEndX = e.changedTouches[0].clientX;
       const diff = touchEndX - touchStartX;
-      
+
       // If swiped right with enough distance (common back gesture)
       if (diff > 100) {
         e.preventDefault();
@@ -60,14 +67,14 @@ const Dashboard = () => {
         return false;
       }
     };
-    
-    document.addEventListener('touchstart', handleTouchStart, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd, { passive: false });
-    
+
+    document.addEventListener("touchstart", handleTouchStart, { passive: false });
+    document.addEventListener("touchend", handleTouchEnd, { passive: false });
+
     return () => {
       window.removeEventListener("popstate", preventNavigation);
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchend", handleTouchEnd);
     };
   }, [location, navigate]);
 
@@ -75,36 +82,56 @@ const Dashboard = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
 
+  // Image upload handlers
+  const handleSidebarImageUpload = (event) => {
+    const file = event.target.files[0];
+    setSidebarBackgroundImage(file);
+    if (file) {
+      setSidebarPreview(URL.createObjectURL(file));
+    } else {
+      setSidebarPreview(null);
+    }
+  };
+
+  const handleInteractiveAreaImageUpload = (event) => {
+    const file = event.target.files[0];
+    setInteractiveAreaBackgroundImage(file);
+    if (file) {
+      setInteractiveAreaPreview(URL.createObjectURL(file));
+    } else {
+      setInteractiveAreaPreview(null);
+    }
+  };
+
+  // Chatbot customization section
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Mobile overlay */}
       {isMobileSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden" 
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}
-      
+
       {/* Sidebar - hidden on mobile unless toggled */}
-      <div className={`fixed z-30 h-full transition-transform duration-300 transform 
-        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} 
+      <div
+        className={`fixed z-30 h-full transition-transform duration-300 transform
+        ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         lg:relative lg:translate-x-0`}
       >
-        <Sidebar 
-          isMobileOpen={isMobileSidebarOpen} 
-          setIsMobileOpen={setIsMobileSidebarOpen} 
-        />
+        <Sidebar isMobileOpen={isMobileSidebarOpen} setIsMobileOpen={setIsMobileSidebarOpen} />
       </div>
-      
+
       {/* Main content area */}
       <div className="flex-1 flex flex-col w-full">
         {/* Navbar */}
         <Navbar toggleMobileSidebar={toggleMobileSidebar} />
-        
+
         {/* Page content */}
         <div className="p-4 sm:p-6 md:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">Admin Dashboard</h1>
-          
+
           {/* Stats cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
@@ -120,7 +147,7 @@ const Dashboard = () => {
               <p className="text-2xl sm:text-3xl font-bold text-green-600">1,254</p>
             </div>
           </div>
-          
+
           {/* Additional content sections could go here */}
           <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -140,7 +167,7 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-700 mb-4">Quick Actions</h2>
               <div className="grid grid-cols-2 gap-4">
@@ -159,10 +186,54 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-          
+
+          {/* Chatbot Customization */}
+          <div className="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Chatbot Customization</h2>
+
+            <div className="mb-4">
+              <label htmlFor="sidebarImage" className="block text-gray-700 text-sm font-bold mb-2">
+                Sidebar Background Image (Optional)
+              </label>
+              <input
+                type="file"
+                id="sidebarImage"
+                onChange={handleSidebarImageUpload}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+              {sidebarPreview && (
+                <img src={sidebarPreview} alt="Sidebar Preview" className="mt-2 max-w-xs rounded-md" />
+              )}
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="interactiveAreaImage" className="block text-gray-700 text-sm font-bold mb-2">
+                Interactive Area Background Image (Optional)
+              </label>
+              <input
+                type="file"
+                id="interactiveAreaImage"
+                onChange={handleInteractiveAreaImageUpload}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+              {interactiveAreaPreview && (
+                <img
+                  src={interactiveAreaPreview}
+                  alt="Interactive Area Preview"
+                  className="mt-2 max-w-xs rounded-md"
+                />
+              )}
+            </div>
+          </div>
+
           {/* Chatbot */}
           <div className="mt-8">
-            <Chatbot />
+            <Chatbot
+              sidebarBackgroundImage={sidebarBackgroundImage ? URL.createObjectURL(sidebarBackgroundImage) : null}
+              interactiveAreaBackgroundImage={
+                interactiveAreaBackgroundImage ? URL.createObjectURL(interactiveAreaBackgroundImage) : null
+              }
+            />
           </div>
         </div>
       </div>

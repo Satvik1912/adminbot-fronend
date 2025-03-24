@@ -664,3 +664,20 @@
   font-weight: 600;
   color: #79b9ff; /* Bright blue for @ symbol */
 }
+/* Chat History Sidebar Styles */
+.chat-history-item .chat-history-title {
+  color: #161515; /* Or any darker color you prefer */
+}
+
+.chat-history-item .chat-history-date {
+  color: #161515; /* Or a slightly darker shade */
+}
+
+/* Conversation Message Styles */
+.message-timestamp {
+  color: rgb(0, 0, 0); /* Or a slightly darker shade */
+}
+
+.search-input::placeholder {
+    color: black;
+}

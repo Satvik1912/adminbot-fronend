@@ -5,7 +5,7 @@ import "./Chatbot.css";
 import axios from "axios";
 import ReactMarkdown from 'react-markdown';
 
-const Chatbot = () => {
+const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => {  // Add the props
     // Main states
     const [isOpen, setIsOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -635,313 +635,351 @@ const Chatbot = () => {
     // Handle Excel download
     const handleDownloadExcel = (conversationId, excelPath) => {
         if (!conversationId) {
-            alert("No data available for download");
-            return;
-        }
+          alert("No data available for download");
+          return;
+      }
 
-        if (!isAuthenticated) {
-            alert("Authentication required. Please log in.");
-            return;
-        }
+      if (!isAuthenticated) {
+          alert("Authentication required. Please log in.");
+          return;
+      }
 
-        fetch(`http://127.0.0.1:8000/download-excel/${conversationId}/`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        localStorage.removeItem('token');
-                        setAuthToken(null);
-                        setIsAuthenticated(false);
-                        throw new Error('Authentication failed');
-                    }
-                    throw new Error('Download failed');
-                }
-                return response.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = `conversation_${conversationId}.xlsx`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            })
-            .catch(error => {
-                console.error("Download error:", error);
-                alert("Failed to download the file: " + error.message);
-            });
-
-
-    };
-
-    // Toggle sidebar on mobile
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
-
-    // Login helper function
-    const handleLogin = (token) => {
-        localStorage.setItem('token', token);
-        setAuthToken(token);
-        setIsAuthenticated(true);
-        fetchThreadHistory();
-    };
-
-    // Logout helper function
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        setAuthToken(null);
-        setIsAuthenticated(false);
-        setChatHistory({});
-        createNewChat();
-    };
-
-    // Effect to close chatbot on outside click
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (chatWindowRef.current && !chatWindowRef.current.contains(event.target) &&
-                event.target.closest('.fixed.bottom-5.right-5:not(.chat-window)') == null &&
-                 event.target.closest('.fixed.bottom-5.right-5.bg-blue-600') == null) {
-                setIsOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [chatWindowRef]);
+      fetch(`http://127.0.0.1:8000/download-excel/${conversationId}/`, {
+          method: 'GET',
+          headers: {
+              'Authorization': `Bearer ${authToken}`
+          }
+      })
+          .then(response => {
+              if (!response.ok) {
+                  if (response.status === 401) {
+                      localStorage.removeItem('token');
+                      setAuthToken(null);
+                      setIsAuthenticated(false);
+                      throw new Error('Authentication failed');
+                  }
+                  throw new Error('Download failed');
+              }
+              return response.blob();
+          })
+          .then(blob => {
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.style.display = 'none';
+              a.href = url;
+              a.download = `conversation_${conversationId}.xlsx`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              document.body.removeChild(a);
+          })
+          .catch(error => {
+              console.error("Download error:", error);
+              alert("Failed to download the file: " + error.message);
+          });
 
 
-    return (
-        <>
-            {/* Chat button */}
-            <button
-                onClick={() => setIsOpen(true)}
-                className={`fixed bottom-5 right-5 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 ${isOpen ? 'opacity-0 z-0' : 'opacity-100 z-50'}`}
-                aria-label="Open chat"
-            >
-                <FaRobot className="text-xl" />
-            </button>
+  };
 
-            {/* Chat window */}
-            <div className={`fixed bottom-5 right-5 chat-window transition-all duration-300 transform ${isOpen ? 'scale-100 z-50' : 'scale-0 z-0'}`} ref={chatWindowRef}>
-                <div className="chat-container">
-                    {/* Sidebar */}
-                    <aside className={`chat-sidebar ${isSidebarOpen ? 'active' : ''}`} ref={sidebarRef}>
-                        <div className="search-container">
-                            <div className="search-input-wrapper">
-                                <FaSearch className="search-icon" />
-                                <input
-                                    type="text"
-                                    className="search-input"
-                                    placeholder="Search chats"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-                        </div>
+  // Toggle sidebar on mobile
+  const toggleSidebar = () => {
+      setIsSidebarOpen(!isSidebarOpen);
+  };
 
-                        <button className="new-chat-btn" onClick={createNewChat}>
-                            <FaPlus className="mr-2" /> New Chat
-                        </button>
+  // Login helper function
+  const handleLogin = (token) => {
+      localStorage.setItem('token', token);
+      setAuthToken(token);
+      setIsAuthenticated(true);
+      fetchThreadHistory();
+  };
 
-                        {/* Authentication status indicator */}
-                        <div className="auth-status">
-                            {isAuthenticated ? (
-                                <div className="flex justify-between items-center px-4 py-2 bg-green-50 text-green-800 text-sm">
-                                    <span>Authenticated</span>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="text-xs text-red-600 hover:text-red-800"
-                                    >
-                                        Logout
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="px-4 py-2 bg-red-50 text-red-800 text-sm">
-                                    Not authenticated. Please log in.
-                                </div>
-                            )}
-                        </div>
+  // Logout helper function
+  const handleLogout = () => {
+      localStorage.removeItem('token');
+      setAuthToken(null);
+      setIsAuthenticated(false);
+      setChatHistory({});
+      createNewChat();
+  };
 
-                        <div className="chat-history-list">
-                            {isAuthenticated && isLoadingThreads && !chatHistoryLoaded && (
-                                <div className="loading-indicator"></div>
-                            )}
+  // Effect to close chatbot on outside click
+  useEffect(() => {
+      const handleClickOutside = (event) => {
+          if (chatWindowRef.current && !chatWindowRef.current.contains(event.target) &&
+              event.target.closest('.fixed.bottom-5.right-5:not(.chat-window)') == null &&
+               event.target.closest('.fixed.bottom-5.right-5.bg-blue-600') == null) {
+              setIsOpen(false);
+          }
+      };
 
-                            {filteredChats.length > 0 ? (
-                                filteredChats.map(([chatId, chat]) => (
-                                    <div
-                                        key={chatId}
-                                        className={`chat-history-item ${currentChatId === chatId ? 'active' : ''}`}
-                                        onClick={() => loadChat(chatId)}
-                                    >
-                                        <div className="chat-history-title">{chat.title}</div>
-                                        <div className="chat-history-date">{formatTimestamp(chat.createdAt)}</div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="no-results">
-                                    {isAuthenticated && chatHistoryLoaded ? "No chats found" : "Sign in to see your chat history"}
-                                </div>
-                            )}
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
+      };
+  }, [chatWindowRef]);
 
-                            {isLoadingThreads && chatHistoryLoaded && (
-                                <div className="loading-more">Loading more chats...</div>
-                            )}
-                        </div>
-                    </aside>
+  //const backgroundImageURL = "url('your-image-url.jpg')"; // Replace with your image URL
+  //const sidebarBackgroundImageURL = "url('your-sidebar-image.jpg')"; // Replace with your sidebar image URL
 
-                    {/* Main chat area */}
-                    <main className="chat-main">
-                        {/* Header */}
-                        <div className="chat-header">
-                            <div className="flex items-center">
-                                <button
-                                    className="sidebar-toggle"
-                                    onClick={toggleSidebar}
-                                    aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
-                                >
-                                    <FaBars />
-                                </button>
-                                <div className="chat-title">Loanie</div>
-                            </div>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="close-button"
-                                aria-label="Close chat"
-                            >
-                                <FaTimes />
-                            </button>
-                        </div>
+  return (
+      <>
+          {/* Chat button */}
+          <button
+              onClick={() => setIsOpen(true)}
+              className={`fixed bottom-5 right-5 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 ${isOpen ? 'opacity-0 z-0' : 'opacity-100 z-50'}`}
+              aria-label="Open chat"
+          >
+              <FaRobot className="text-xl" />
+          </button>
 
-                        {/* Authentication warning banner */}
-                        {!isAuthenticated && (
-                            <div className="auth-warning-banner">
-                                {/* This would typically be replaced with a login form or link */}
+          {/* Chat window */}
+          <div
+              className={`fixed bottom-5 right-5 chat-window transition-all duration-300 transform ${isOpen ? 'scale-100 z-50' : 'scale-0 z-0'}`}
+              ref={chatWindowRef}
+              style={{
+                  backgroundImage: interactiveAreaBackgroundImage ? `url('${interactiveAreaBackgroundImage}')` : null,
+                  backgroundSize: 'cover', // or 'contain', '100% 100%', etc.
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'center'
+              }}
+          >
+              <div className="chat-container">
+                  {/* Sidebar */}
+                  <aside  className={`chat-sidebar ${isSidebarOpen ? 'active' : ''}`} ref={sidebarRef} style={{
+                       backgroundImage: sidebarBackgroundImage ? `url('${sidebarBackgroundImage}')` : null,
+                       backgroundSize: 'cover',
+                       backgroundRepeat: 'no-repeat',
+                       backgroundPosition: 'center'
+                  }}>
+                    {isSidebarOpen && (
+  <button
+    className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 z-50"
+    onClick={toggleSidebar}
+    aria-label="Close sidebar"
+  >
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      fill="none" 
+      viewBox="0 0 24 18" 
+      stroke="currentColor" 
+      className="w-6 h-6"
+    >
+      <path 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        strokeWidth={2} 
+        d="M11 19l-7-7 7-7m8 14l-7-7 7-7" 
+      />
+    </svg>
+  </button>
+)}
+                      <div className="search-container">
+                          <div className="search-input-wrapper">
+                              <FaSearch className="search-icon" />
+                              <input
+                                  type="text"
+                                  className="search-input"
+                                  placeholder="Search chats"
+                                  value={searchQuery}
+                                  onChange={(e) => setSearchQuery(e.target.value)}
+                              />
+                          </div>
+                      </div>
 
-                            </div>
-                        )}
+                      <button className="new-chat-btn" onClick={createNewChat}>
+                          <FaPlus className="mr-2" /> New Chat
+                      </button>
 
-                        {/* Messages */}
-                        <div className="chat-messages" ref={chatMessagesRef}>
-                            {isLoadingConversations && conversationPage > 1 && (
-                                <div className="loading-older-messages">Loading older messages...</div>
-                            )}
+                      {/* Authentication status indicator */}
+                      <div className="auth-status">
+                          {isAuthenticated ? (
+                              <div className="flex justify-between items-center px-4 py-2 bg-green-50 text-green-800 text-sm">
+                                  <span>Authenticated</span>
+                                  <button
+                                      onClick={handleLogout}
+                                      className="text-xs text-red-600 hover:text-red-800"
+                                  >
+                                      Logout
+                                  </button>
+                              </div>
+                          ) : (
+                              <div className="px-4 py-2 bg-red-50 text-red-800 text-sm">
+                                  Not authenticated. Please log in.
+                              </div>
+                          )}
+                      </div>
 
-                            {messages.map((msg, index) => (
-                                <div key={index} className={`message-wrapper ${msg.sender === "user" ? "user-message-wrapper" : "bot-message-wrapper"}`}>
-                                    <div className={`message ${msg.sender === "user" ? "user-message" : "bot-message"} ${msg.isError ? "error-message" : ""}`}>
-                                        {msg.parsedHtml ? (
-                                            <div dangerouslySetInnerHTML={{ __html: msg.text }} />
-                                        ) : (
-                                            <>{msg.text}</>
-                                        )}
+                      <div className="chat-history-list">
+                          {isAuthenticated && isLoadingThreads && !chatHistoryLoaded && (
+                              <div className="loading-indicator"></div>
+                          )}
 
-                                        {/* Action buttons for bot messages (excluding initial message) */}
-                                        {msg.sender === "bot" && !msg.isInitial && !msg.isError && msg.conversationId && (
-                                            <div className="message-actions">
-                                                {msg.chartType && msg.chartImageUrl && (
-                                                    <button
-                                                        className="action-button display-chart"
-                                                        onClick={() => handleDisplayChart(msg.chartImageUrl)}
-                                                        aria-label="Display chart"
-                                                    >
-                                                        <FaChartBar className="mr-1" /> Display Chart
-                                                    </button>
-                                                )}
-                                                <button
-                                                    className="action-button download-excel"
-                                                    onClick={() => handleDownloadExcel(msg.conversationId, msg.excelPath)}
-                                                    aria-label="Download Excel"
-                                                >
-                                                    <FaFileExcel className="mr-1" /> Download Excel
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="message-timestamp">
-                                        {formatTimestamp(msg.timestamp)}
-                                    </div>
-                                </div>
-                            ))}
+                          {filteredChats.length > 0 ? (
+                              filteredChats.map(([chatId, chat]) => (
+                                  <div
+                                      key={chatId}
+                                      className={`chat-history-item ${currentChatId === chatId ? 'active' : ''}`}
+                                      onClick={() => loadChat(chatId)}
+                                  >
+                                      <div className="chat-history-title">{chat.title}</div>
+                                      <div className="chat-history-date">{formatTimestamp(chat.createdAt)}</div>
+                                  </div>
+                              ))
+                          ) : (
+                              <div className="no-results">
+                                  {isAuthenticated && chatHistoryLoaded ? "No chats found" : "Sign in to see your chat history"}
+                              </div>
+                          )}
 
-                            {/* Loading indicator with fun facts */}
-                            {isWaitingForResponse && (
-                                <div className="message-wrapper bot-message-wrapper">
-                                    <div className="message bot-message">
-                                        <div className="typing-indicator">
-                                            <span></span>
-                                            <span></span>
-                                            <span></span>
-                                        </div>
-                                        <div className="fun-fact">
-                                            <p><strong>Did you know?</strong> {funFacts[funFactIndex]}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                          {isLoadingThreads && chatHistoryLoaded && (
+                              <div className="loading-more">Loading more chats...</div>
+                          )}
+                      </div>
+                  </aside>
 
-                            <div ref={messagesEndRef} />
-                        </div>
+                  {/* Main chat area */}
+                  <main className="chat-main">
+                      {/* Header */}
+                      <div className="chat-header">
+                          <div className="flex items-center">
+                              <button
+                                  className="sidebar-toggle"
+                                  onClick={toggleSidebar}
+                                  aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+                              >
+                                  <FaBars />
+                              </button>
+                              <div className="chat-title">Loanie</div>
+                          </div>
+                          <button
+                              onClick={() => setIsOpen(false)}
+                              className="close-button"
+                              aria-label="Close chat"
+                          >
+                              <FaTimes />
+                          </button>
+                      </div>
 
-                        {/* Input area with dropdown */}
-                        <div className="chat-input-area">
-                            <div className="input-wrapper w-full flex-grow relative">
-                                <input
-                                    type="text"
-                                    ref={inputRef}
-                                    className="chat-input w-full"
-                                    value={input}
-                                    onChange={handleInputChange}
-                                    onKeyPress={handleKeyPress}
-                                    placeholder={isAuthenticated ? "Type @ for insights or just type for excel..." : "Please log in to chat"}
-                                    disabled={isWaitingForResponse || !isAuthenticated}
-                                />
+                      {/* Authentication warning banner */}
+                      {!isAuthenticated && (
+                          <div className="auth-warning-banner">
+                              {/* This would typically be replaced with a login form or link */}
 
-                                {/* Type dropdown - showing only insights option */}
-                                {showTypeDropdown && (
-                                    <div
-                                        ref={typeDropdownRef}
-                                        className="type-dropdown absolute left-0 bottom-full mb-2 bg-white rounded-md shadow-lg z-10 w-48"
-                                    >
-                                        <div className="p-2 text-xs text-gray-500 border-b">Loanie insights:</div>
-                                        <div
-                                            className="p-2 hover:bg-blue-50 cursor-pointer"
-                                            onClick={() => handleTypeSelect('insights')}
-                                        >
-                                            @Insights
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                          </div>
+                      )}
 
-                            <button
-                                onClick={isWaitingForResponse || !isAuthenticated ? null : handleSend}
-                                className={`send-button ${isWaitingForResponse ? 'loading' : (!isAuthenticated || !input.trim() ? 'disabled' : '')}`}
-                                disabled={!input.trim() || isWaitingForResponse || !isAuthenticated}
-                                aria-label="Send message"
-                            >
-                                {isWaitingForResponse ? (
-                                    <div className="button-loader"></div>
-                                ) : (
-                                    <FaPaperPlane />
-                                )}
-                            </button>
-                        </div>
-                    </main>
-                </div>
-            </div>
-        </>
-    );
+                      {/* Messages */}
+                      <div className="chat-messages" ref={chatMessagesRef}>
+                          {isLoadingConversations && conversationPage > 1 && (
+                              <div className="loading-older-messages">Loading older messages...</div>
+                          )}
+
+                          {messages.map((msg, index) => (
+                              <div key={index} className={`message-wrapper ${msg.sender === "user" ? "user-message-wrapper" : "bot-message-wrapper"}`}>
+                                  <div className={`message ${msg.sender === "user" ? "user-message" : "bot-message"} ${msg.isError ? "error-message" : ""}`}>
+                                      {msg.parsedHtml ? (
+                                          <div dangerouslySetInnerHTML={{ __html: msg.text }} />
+                                      ) : (
+                                          <>{msg.text}</>
+                                      )}
+
+                                      {/* Action buttons for bot messages (excluding initial message) */}
+                                      {msg.sender === "bot" && !msg.isInitial && !msg.isError && msg.conversationId && (
+                                          <div className="message-actions">
+                                              {msg.chartType && msg.chartImageUrl && (
+                                                  <button
+                                                      className="action-button display-chart"
+                                                      onClick={() => handleDisplayChart(msg.chartImageUrl)}
+                                                      aria-label="Display chart"
+                                                  >
+                                                      <FaChartBar className="mr-1" /> Display Chart
+                                                  </button>
+                                              )}
+                                              <button
+                                                  className="action-button download-excel"
+                                                  onClick={() => handleDownloadExcel(msg.conversationId, msg.excelPath)}
+                                                  aria-label="Download Excel"
+                                              >
+                                                  <FaFileExcel className="mr-1" /> Download Excel
+                                              </button>
+                                          </div>
+                                      )}
+                                  </div>
+                                  <div className="message-timestamp">
+                                      {formatTimestamp(msg.timestamp)}
+                                  </div>
+                              </div>
+                          ))}
+
+                          {/* Loading indicator with fun facts */}
+                          {isWaitingForResponse && (
+                              <div className="message-wrapper bot-message-wrapper">
+                                  <div className="message bot-message">
+                                      <div className="typing-indicator">
+                                          <span></span>
+                                          <span></span>
+                                          <span></span>
+                                      </div>
+                                      <div className="fun-fact">
+                                          <p><strong>Did you know?</strong> {funFacts[funFactIndex]}</p>
+                                      </div>
+                                  </div>
+                              </div>
+                          )}
+
+                          <div ref={messagesEndRef} />
+                      </div>
+
+                      {/* Input area with dropdown */}
+                      <div className="chat-input-area">
+                          <div className="input-wrapper w-full flex-grow relative">
+                              <input
+                                  type="text"
+                                  ref={inputRef}
+                                  className="chat-input w-full"
+                                  value={input}
+                                  onChange={handleInputChange}
+                                  onKeyPress={handleKeyPress}
+                                  placeholder={isAuthenticated ? "Type @ for insights or just type for excel..." : "Please log in to chat"}
+                                  disabled={isWaitingForResponse || !isAuthenticated}
+                              />
+
+                              {/* Type dropdown - showing only insights option */}
+                              {showTypeDropdown && (
+                                  <div
+                                      ref={typeDropdownRef}
+                                      className="type-dropdown absolute left-0 bottom-full mb-2 bg-white rounded-md shadow-lg z-10 w-48"
+                                  >
+                                      <div className="p-2 text-xs text-gray-500 border-b">Loanie insights:</div>
+                                      <div
+                                          className="p-2 hover:bg-blue-50 cursor-pointer"
+                                          onClick={() => handleTypeSelect('insights')}
+                                      >
+                                          @Insights
+                                      </div>
+                                  </div>
+                              )}
+                          </div>
+
+                          <button
+                              onClick={isWaitingForResponse || !isAuthenticated ? null : handleSend}
+                              className={`send-button ${isWaitingForResponse ? 'loading' : (!isAuthenticated || !input.trim() ? 'disabled' : '')}`}
+                              disabled={!input.trim() || isWaitingForResponse || !isAuthenticated}
+                              aria-label="Send message"
+                          >
+                              {isWaitingForResponse ? (
+                                  <div className="button-loader"></div>
+                              ) : (
+                                  <FaPaperPlane />
+                              )}
+                          </button>
+                      </div>
+                  </main>
+              </div>
+          </div>
+      </>
+  );
 };
 
 export default Chatbot;
