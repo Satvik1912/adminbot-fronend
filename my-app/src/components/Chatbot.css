@@ -666,11 +666,11 @@
 }
 /* Chat History Sidebar Styles */
 .chat-history-item .chat-history-title {
-  color: #161515; /* Or any darker color you prefer */
+  color: #1f1e1e; /* Or any darker color you prefer */
 }
 
 .chat-history-item .chat-history-date {
-  color: #161515; /* Or a slightly darker shade */
+  color: #5c5c5c; /* Or a slightly darker shade */
 }
 
 /* Conversation Message Styles */
@@ -680,4 +680,164 @@
 
 .search-input::placeholder {
     color: black;
+}
+.suggested-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.suggested-question-btn {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.suggested-question-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.suggested-questions-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.suggested-question-btn {
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.suggested-question-btn:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+
+
+/* 26th march */
+
+.chat-input-area {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.input-wrapper {
+  flex-grow: 1;
+  position: relative; /* For dropdown positioning */
+}
+
+.chat-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  color: #4a5568;
+  outline: none;
+}
+
+.chat-input:focus {
+  border-color: #63b3ed;
+  box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.3);
+}
+
+.send-button {
+  background-color: #4f46e5;
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.send-button:hover {
+  background-color: #4338ca;
+}
+
+.send-button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.button-loader {
+    width: 1rem;
+    height: 1rem;
+    border: 3px solid #fff;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.type-dropdown-button-container {
+    position: relative;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.type-dropdown-button {
+    background-color: #f7fafc;
+    color: #4a5568;
+    border: 1px solid #cbd5e0;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    outline: none;
+}
+
+.type-dropdown-button:hover {
+    background-color: #edf2f7;
+}
+
+.type-dropdown-button:disabled {
+    background-color: #a0aec0;
+    cursor: not-allowed;
+}
+
+.type-dropdown-options {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 0.25rem); /* Position above the button */
+    background-color: #fff;
+    border-radius: 0.375rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    min-width: 120px; /* Ensure enough width for content */
+    padding: 0.5rem 0;
+}
+
+.type-dropdown-options > div {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.type-dropdown-options > div:hover {
+    background-color: #edf2f7;
 }

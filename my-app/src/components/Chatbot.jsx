@@ -3,6 +3,7 @@ import { FaRobot, FaPaperPlane, FaTimes, FaSearch, FaPlus, FaChartBar, FaFileExc
 import { generateChatTitle, formatTimestamp } from "./chatbot-utils.js";
 import "./Chatbot.css";
 import axios from "axios";
+
 import ReactMarkdown from 'react-markdown';
 
 const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => {  // Add the props
@@ -28,8 +29,8 @@ const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => 
     const [chatHistoryLoaded, setChatHistoryLoaded] = useState(false);
 
     // New states for the dropdown functionality
-    const [showTypeDropdown, setShowTypeDropdown] = useState(false);
     const [answerType, setAnswerType] = useState("excel"); // Default to excel
+    const [showTypeDropdown, setShowTypeDropdown] = useState(false);  // Added
     const [cursorPosition, setCursorPosition] = useState(0);
 
     const THREAD_LIMIT = 10;
@@ -50,6 +51,29 @@ const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => 
         "The global microfinance market is expected to reach $304 billion by 2026.",
         "Auto loans are the third largest category of household debt after mortgages and student loans."
     ];
+
+    const [suggestedQuestions, setSuggestedQuestions] = useState([
+      {
+          text: "What are the current loan interest rates?",
+          color: "bg-blue-100 text-blue-800 hover:bg-blue-200"
+      },
+      {
+          text: "Calculate my loan eligibility",
+          color: "bg-green-100 text-green-800 hover:bg-green-200"
+      },
+      {
+          text: "Types of loans available",
+          color: "bg-purple-100 text-purple-800 hover:bg-purple-200"
+      },
+      {
+          text: "How to improve credit score?",
+          color: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+      },
+      {
+          text: "Personal loan document requirements",
+          color: "bg-red-100 text-red-800 hover:bg-red-200"
+      }
+  ]);
 
     // Refs
     const messagesEndRef = useRef(null);
@@ -72,22 +96,23 @@ const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => 
 
     // Check authentication status on load
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            setAuthToken(token);
-            setIsAuthenticated(true);
-            fetchThreadHistory();
-        } else {
-            setIsAuthenticated(false);
-            setMessages([{
-                text: "Hello! How can I assist you with loans query today? Please login to see previous conversations.",
-                sender: "bot",
-                isInitial: true
-            }]);
-        }
-    }, []);
+      const token = localStorage.getItem('token');
+      if (token) {
+          setAuthToken(token);
+          setIsAuthenticated(true);
+          fetchThreadHistory();
+      } else {
+          setIsAuthenticated(false);
+          setMessages([{
+              text: "Hello! How can I assist you with loans query today? Please log in to continue. Here are some suggested questions:",
+              sender: "bot",
+              isInitial: true,
+              suggestedQuestions: suggestedQuestions.map(q => q.text)
+          }]);
+      }
+  }, []);
 
-    // Handle input changes including @ trigger
+    // Handle input changes including @ trigger - No more @ trigger
     const handleInputChange = (e) => {
         const value = e.target.value;
         setInput(value);
@@ -95,39 +120,13 @@ const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => 
         const position = e.target.selectionStart;
         setCursorPosition(position);
 
-        if (value[position - 1] === '@') {
-            setShowTypeDropdown(true);
-        } else if (showTypeDropdown) {
-            const nearText = value.substring(Math.max(0, position - 2), position);
-            if (!nearText.includes('@')) {
-                setShowTypeDropdown(false);
-            }
-        }
-
-
+        // Removed @ logic
     };
 
     // Handle dropdown option selection
     const handleTypeSelect = (type) => {
-        const beforeCursor = input.substring(0, cursorPosition - 1);
-        const afterCursor = input.substring(cursorPosition);
-
-        const displayType = type.charAt(0).toUpperCase() + type.slice(1);
-        setInput(`${beforeCursor}@${displayType} ${afterCursor}`);
-
-        setAnswerType(type);
-
-        setShowTypeDropdown(false);
-
-        setTimeout(() => {
-            if (inputRef.current) {
-                inputRef.current.focus();
-                const newPosition = beforeCursor.length + displayType.length + 2;
-                inputRef.current.setSelectionRange(newPosition, newPosition);
-            }
-        }, 0);
-
-
+      setAnswerType(type); //Set the answer Type
+      setShowTypeDropdown(false); // close the dropdown after selection
     };
 
     // Click outside to close dropdown
@@ -390,43 +389,40 @@ const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => 
 
     // Create a new chat
     const createNewChat = () => {
-        const newChatId = `chat_${Date.now()}`;
-        const initialMessage = {
-            text: "Hello! How can I assist you with loan management today?",
-            sender: "bot",
-            isInitial: true,
+      const newChatId = `chat_${Date.now()}`;
+      const initialMessage = {
+          text: "Hello! How can I assist you with loan management today? Here are some suggested questions:",
+          sender: "bot",
+          isInitial: true,
+          suggestedQuestions: suggestedQuestions.map(q => q.text)
+      };
 
-        };
+      setMessages([initialMessage]);
 
-        setMessages([initialMessage]);
+      setChatHistory(prev => ({
+          [newChatId]: {
+              title: "New Chat",
+              messages: [initialMessage],
+              createdAt: new Date().toISOString(),
+              threadId: null
+          },
+          ...prev
+      }));
 
-        setChatHistory(prev => ({
-            [newChatId]: {
-                title: "New Chat",
-                messages: [initialMessage],
-                createdAt: new Date().toISOString(),
-                threadId: null
-            },
-            ...prev
-        }));
+      setCurrentChatId(newChatId);
+      setCurrentThreadId(null);
 
-        setCurrentChatId(newChatId);
-        setCurrentThreadId(null);
+      setAnswerType("excel");
 
-        setAnswerType("excel");
+      setConversationPage(1);
+      setTotalConversationPages(1);
 
-        setConversationPage(1);
-        setTotalConversationPages(1);
+      if (window.innerWidth <= 768) {
+          setIsSidebarOpen(false);
+      }
 
-        if (window.innerWidth <= 768) {
-            setIsSidebarOpen(false);
-        }
-
-        setTimeout(() => inputRef.current?.focus(), 100);
-
-
-    };
-
+      setTimeout(() => inputRef.current?.focus(), 100);
+  };
     // Load an existing chat
     const loadChat = (chatId) => {
         if (chatHistory[chatId]) {
@@ -472,8 +468,7 @@ const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => 
         }
 
         if (input.trim() && !isWaitingForResponse) {
-            const isInsightsMode = input.includes('@Insights') || input.includes('@insights');
-            const currentAnswerType = isInsightsMode ? 'insights' : 'excel';
+            // Removed - isInsightsMode and always use selected answerType
 
             const userMessage = {
                 text: input.trim(),
@@ -504,7 +499,7 @@ const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => 
             try {
                 const requestBody = {
                     user_input: userMessage.text,
-                    answer_type: currentAnswerType
+                    answer_type: answerType  //use answer type state
                 };
 
                 if (currentThreadId) {
@@ -875,14 +870,42 @@ const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => 
                               <div className="loading-older-messages">Loading older messages...</div>
                           )}
 
-                          {messages.map((msg, index) => (
-                              <div key={index} className={`message-wrapper ${msg.sender === "user" ? "user-message-wrapper" : "bot-message-wrapper"}`}>
-                                  <div className={`message ${msg.sender === "user" ? "user-message" : "bot-message"} ${msg.isError ? "error-message" : ""}`}>
-                                      {msg.parsedHtml ? (
-                                          <div dangerouslySetInnerHTML={{ __html: msg.text }} />
-                                      ) : (
-                                          <>{msg.text}</>
-                                      )}
+{messages.map((msg, index) => (
+        <div key={index} className={`message-wrapper ${msg.sender === "user" ? "user-message-wrapper" : "bot-message-wrapper"}`}>
+            <div className={`message ${msg.sender === "user" ? "user-message" : "bot-message"} ${msg.isError ? "error-message" : ""}`}>
+                {msg.parsedHtml ? (
+                    <div dangerouslySetInnerHTML={{ __html: msg.text }} />
+                ) : (
+                    <>{msg.text}</>
+                )}
+
+                {/* Suggested Questions */}
+                {msg.suggestedQuestions && (
+                    <div className="suggested-questions-container mt-2">
+                        {msg.suggestedQuestions.map((question, qIndex) => {
+                            // Find the corresponding color for the question
+                            const questionObj = suggestedQuestions.find(q => q.text === question);
+                            return (
+                                <button
+                                    key={qIndex}
+                                    className={`suggested-question-btn ${questionObj?.color || 'bg-gray-100 text-gray-800'} 
+                                        transition-all duration-300 ease-in-out transform hover:scale-105`}
+                                    onClick={() => {
+                                        // Directly set input and trigger send
+                                        setInput(question);
+                                        
+                                        // Use a timeout to ensure input is set before sending
+                                        setTimeout(() => {
+                                            handleSend();
+                                        }, 100);
+                                    }}
+                                >
+                                    {question}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
 
                                       {/* Action buttons for bot messages (excluding initial message) */}
                                       {msg.sender === "bot" && !msg.isInitial && !msg.isError && msg.conversationId && (
@@ -933,6 +956,36 @@ const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => 
 
                       {/* Input area with dropdown */}
                       <div className="chat-input-area">
+                        {/* Type dropdown - showing only insights option */}
+                        <div className="type-dropdown-button-container">
+                          <button
+                              className="type-dropdown-button"
+                              onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+                              disabled={isWaitingForResponse || !isAuthenticated}
+                            >
+                              {answerType === "excel" ? "Excel" : "Insights"}
+                          </button>
+
+                          {showTypeDropdown && (
+                              <div
+                                  ref={typeDropdownRef}
+                                  className="type-dropdown-options absolute left-0 bottom-full mb-2 bg-white rounded-md shadow-lg z-10 w-25"
+                              >
+                                  <div
+                                      className="p-2 hover:bg-blue-50 cursor-pointer"
+                                      onClick={() => handleTypeSelect('insights')}
+                                  >
+                                      Insights
+                                  </div>
+                                  <div
+                                      className="p-2 hover:bg-blue-50 cursor-pointer"
+                                      onClick={() => handleTypeSelect('excel')}
+                                  >
+                                      Excel
+                                  </div>
+                              </div>
+                          )}
+                        </div>
                           <div className="input-wrapper w-full flex-grow relative">
                               <input
                                   type="text"
@@ -941,25 +994,11 @@ const Chatbot = ({ sidebarBackgroundImage, interactiveAreaBackgroundImage }) => 
                                   value={input}
                                   onChange={handleInputChange}
                                   onKeyPress={handleKeyPress}
-                                  placeholder={isAuthenticated ? "Type @ for insights or just type for excel..." : "Please log in to chat"}
+                                  placeholder={isAuthenticated ? "Type your question..." : "Please log in to chat"}
                                   disabled={isWaitingForResponse || !isAuthenticated}
                               />
 
-                              {/* Type dropdown - showing only insights option */}
-                              {showTypeDropdown && (
-                                  <div
-                                      ref={typeDropdownRef}
-                                      className="type-dropdown absolute left-0 bottom-full mb-2 bg-white rounded-md shadow-lg z-10 w-48"
-                                  >
-                                      <div className="p-2 text-xs text-gray-500 border-b">Loanie insights:</div>
-                                      <div
-                                          className="p-2 hover:bg-blue-50 cursor-pointer"
-                                          onClick={() => handleTypeSelect('insights')}
-                                      >
-                                          @Insights
-                                      </div>
-                                  </div>
-                              )}
+
                           </div>
 
                           <button
